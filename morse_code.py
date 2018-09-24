@@ -17,7 +17,6 @@ WORDS_PER_MINUTE = 10
 DOT_TIME = 1200/WORDS_PER_MINUTE
 DASH_TIME = DOT_TIME * 3
 MARK_SPACE = DOT_TIME
-SIGNAL_SPACE = DOT_TIME * 3
 WORD_SPACE = DOT_TIME * 7
 
 DOT_TIME_MIN = DOT_TIME/4
@@ -26,7 +25,6 @@ DOT_TIME_MAX = DASH_TIME/2
 DASH_TIME_MIN = DOT_TIME_MAX
 DASH_TIME_MAX = DASH_TIME + (DOT_TIME * 2)
 
-SIGNAL_SPACE_MIN = SIGNAL_SPACE * 2
 SIGNAL_SPACE_MAX = WORD_SPACE * 2
 WORD_SPACE_MIN = SIGNAL_SPACE_MAX
 
@@ -34,8 +32,21 @@ DOT = "."
 DASH = "-"
 SPACE = " "
 
-DOT_IMAGE = Image.DIAMOND_SMALL
-DASH_IMAGE = Image.DIAMOND
+DOT_IMAGE = Image("00000:"
+                  "00000:"
+                  "00900:"
+                  "00000:"
+                  "00000")
+DASH_IMAGE = Image("00000:"
+                   "00000:"
+                   "99999:"
+                   "00000:"
+                   "00000")
+OVER_TIME_IMAGE = Image("90009:"
+                        "09090:"
+                        "00900:"
+                        "09090:"
+                        "90009")
 
 TONE_PITCH = 800
 
@@ -56,11 +67,11 @@ def display_dot_dash():
     mark_interval = running_time() - mark_start_time
 
     if mark_interval < DOT_TIME_MAX:
-        display.show(Image.DIAMOND_SMALL) 
+        display.show(DOT_IMAGE) 
     elif mark_interval >= DASH_TIME_MIN and mark_interval < DASH_TIME_MAX:
-        display.show(Image.DIAMOND)
+        display.show(DASH_IMAGE)
     elif mark_interval >= DASH_TIME_MAX:
-        display.show(Image.SKULL)
+        display.show(OVER_TIME_IMAGE)
 
 def process_mark_time():
     global mark_has_begun, mark_start_time
@@ -72,8 +83,10 @@ def process_mark_time():
 
     if mark_interval > DOT_TIME_MIN and mark_interval < DOT_TIME_MAX:
         message.append(DOT)
+        space_start_time = running_time() 
     elif mark_interval > DASH_TIME_MIN and mark_interval < DASH_TIME_MAX:
         message.append(DASH)
+        space_start_time = running_time() 
 
     mark_has_begun = False
     
@@ -88,11 +101,12 @@ def process_space_time():
         space_start_time = running_time() 
         return  
 
-
     space_interval = running_time() - space_start_time
     if space_interval > WORD_SPACE_MIN:
-        message.append(SPACE)
-        mark_start_time = running_time() 
+        # Don't put two spaces in a row
+        if len(message) > 0 and not message[len(message)-1] == SPACE:
+            message.append(SPACE)
+        mark_start_time = running_time() # TODO is this useful?
 
     space_has_begun = False
 
