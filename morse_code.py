@@ -5,19 +5,17 @@ WORD_LIMIT = 20
 
 EOL = "\n"
 
-WORDS_PER_MINUTE = 10			 # Scale for all durations
-DOT_TIME = 1200/WORDS_PER_MINUTE  # Duration of an ideal dot mark
-DASH_TIME = DOT_TIME * 3		  # Duration of ideal dash mark
-MARK_SPACE = DOT_TIME			 # Time between marks
-SIGNAL_SPACE = DOT_TIME * 3	     # Time between letters
-WORD_SPACE = DOT_TIME * 7		 # Time between words
+DASH_TIME = 1200/10 * 3		  # Duration of ideal dash mark
+MARK_SPACE =  1200/10			 # Time between marks
+SIGNAL_SPACE = 1200/10 * 3	     # Time between letters
+WORD_SPACE = 1200/10 * 7		 # Time between words
 
 """ Following thresholds are used to detect input """
-DOT_TIME_MIN = DOT_TIME/4		 # Minimum dot duration
+DOT_TIME_MIN =  1200/10/4		 # Minimum dot duration
 DOT_TIME_MAX = DASH_TIME/2		# Maximum dot duration
 
 DASH_TIME_MIN = DOT_TIME_MAX				# Min dash duration
-DASH_TIME_MAX = DASH_TIME + (DOT_TIME * 2)  # Max dash duration
+DASH_TIME_MAX = DASH_TIME + (1200/10 * 2)  # Max dash duration
 
 SIGNAL_SPACE_MIN = SIGNAL_SPACE * 2
 SIGNAL_SPACE_MAX = WORD_SPACE * 2  # Max duration between letters
@@ -30,9 +28,9 @@ SPACE = " "
 WORD = "|"
 
 """ LED matrix images of dots, dashes, and over time """
-DOT_IMAGE = Image("00000:00000:00900:00000:00000")
-DASH_IMAGE = Image("00000:00000:99999:00000:00000")
-OVER_TIME_IMAGE = Image("90009:09090:00900:09090:90009")
+DOT_IMAGE = Image.DIAMOND_SMALL
+DASH_IMAGE = Image.DIAMOND
+OVER_TIME_IMAGE = Image.CONFUSED
 
 TONE_PITCH = 800  # Frequency to play through speaker
 
@@ -43,6 +41,7 @@ space_has_begun = False			# State when key let up
 space_start_time = running_time()  # Used to derive space
 message = list()  # List accumulates Dots, Dashes, and Spaces 
 
+is_serial_receive_mode = False
 
 def not_at_max_message_length():
 	""" Indicates if we have room left in message """
@@ -102,12 +101,10 @@ def process_space_time():
 		# Don't put two spaces in a row
 		if len(message) > 0 and not message[len(message)-1] == SPACE and not message[len(message)-1] == SPACE:
 			message.append(SPACE)		
-			mark_start_time = running_time() # TODO is this useful?
 	if space_interval > WORD_SPACE_MIN:
 		# Don't put two spaces in a row
 		if len(message) > 0 and not message[len(message)-1] == WORD:
 			message.append(WORD)
-		mark_start_time = running_time() # TODO is this useful?
 
 	space_has_begun = False
 
@@ -147,7 +144,7 @@ def display_character(character):
 
 	if character == DOT:
 		display.show(DOT_IMAGE)
-		music.pitch(TONE_PITCH,duration=int(round(DOT_TIME)),wait=True)
+		music.pitch(TONE_PITCH,duration=int(round(1200/10)),wait=True)
 		display.clear()
 		sleep(MARK_SPACE)
 
@@ -158,40 +155,38 @@ def display_character(character):
 
 def process_incoming_serial_data():
 	""" gets comma delimited data from serial applies changes appropriately """
-	global message
-	built_string = ""
-	while uart.any() is True:
-		byte_in = uart.read(1)
-		if byte_in == b'\n':
-			continue
-		byte_in = str(byte_in)
-		split_byte = byte_in.split("'")
-		built_string += split_byte[1]
-	if built_string is not "":
-		if built_string != "":
-			parsed_data = built_string.split(",")
-			try:
-				serial_mode_str = parsed_data[0] # TODO do we need to do anything with serial_mode??
-				serial_message_str = parsed_data[1]
-				clear_message_str = parsed_data[2]
-			except IndexError:
-				return
-			
-			if clear_message_str:
+	global message, is_serial_receive_mode
+	parsed_data = ""
+	while uart.any() is True and not parsed_data.endswith('\n'): 
+		parsed_data += str(uart.read(), "utf-8", "ignore")
+		sleep(10)
+
+	if parsed_data:
+		uart.write("parsed {}".format(parsed_data.split(',')) + EOL)
+		try:
+			is_serial_receive_mode = ("1" == parsed_data.split(',')[0]) # TODO do we need to do anything with serial_mode??
+			serial_message_str = parsed_data.split(',')[1]
+
+			if parsed_data.split(',')[2]:
 				message.clear()
-		
-			if serial_message_str and len(serial_message_str) > 0:
+
+			if serial_message_str and len(serial_message_str) > 0 and is_serial_receive_mode:
 				for character in serial_message_str:
+					uart.write(character+EOL)
 					display_character(character)
+
+		except IndexError:
+			return
+
 	
 uart.init(baudrate=9600) 
 uart.write(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"+EOL)
 last_message_length = 0
 
 while True: 
-	encode_keyed_morse_code()
+	if not is_serial_receive_mode: encode_keyed_morse_code()
 	process_incoming_serial_data()
-	if last_message_length != len(message):
+	if last_message_length != len(message) and not is_serial_receive_mode:
 		for character in message:
 			if character == SPACE:
 				uart.write(",")
