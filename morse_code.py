@@ -1,13 +1,21 @@
-# ------------__ Hacking STEM – hot_wheels.py – micro:bit __-----------
-# For use with the Hot Wheels Measuring Speed to Understand Forces and
-# Motion Lesson plan available from Microsoft Education Workshop at
-# http://aka.ms/hackingSTEM
+# ------------__ Hacking STEM – morse_code.py – micro:bit __-----------
+# For use with the Harnessing Electricity to Communicate Lesson plan
+# from Microsoft Education Workshop at http://aka.ms/hackingSTEM
 #
-#  Overview:
-#  This project makes use of 2 to 9 digital pins connected as
-#  gate switches along a Hot Wheels race track as well as the micro:bit
-#  internal accelerometer. Project allows users to track interval
-#  between gates and gforce of impact with end stop.
+#  This project uses a speaker across Pin 0 and GND as well as the 
+#  left built in button. Using short and long button presses, up to 
+#  20 dots, dashes, and spaces will be transmitted to Excel, which can
+#  be used to decode messages.
+#  
+#   * Short button hold will display a dot on LED grid and tone 
+#   * Long button hold will display a dash on LED grid and tone 
+#   * Extra long button hold will display an X on LED grid and no 
+#  character will transmitted to Excel
+#   * Pause between button presses will result in a space.
+#   * If all 20 slots are filled, button pressed will display an X on LED
+#  grid and no data will be transmitted to Excel
+#   * Serial messages sent from excel will display on LED matrix and make
+#  tones via speaker
 #
 #  This project uses a BBC micro:bit microcontroller, information at:
 #  https://microbit.org/
@@ -36,14 +44,14 @@ WORD_SPACE = DOT_TIME * 7         # Time between words
 
 """ Following thresholds are used to detect input """
 DOT_TIME_MIN =  DOT_TIME/4         # Minimum dot duration
-DOT_TIME_MAX = DASH_TIME/2        # Maximum dot duration
+DOT_TIME_MAX = DASH_TIME/2         # Maximum dot duration
 
 DASH_TIME_MIN = DOT_TIME_MAX                # Min dash duration
 DASH_TIME_MAX = DASH_TIME + (DOT_TIME * 2)  # Max dash duration
 
-SIGNAL_SPACE_MIN = SIGNAL_SPACE * 2
-SIGNAL_SPACE_MAX = WORD_SPACE * 2  # Max duration between letters
-WORD_SPACE_MIN = SIGNAL_SPACE_MAX  # Min duration between words
+SIGNAL_SPACE_MIN = SIGNAL_SPACE * 2  # Max duration between marks
+SIGNAL_SPACE_MAX = WORD_SPACE * 2    # Max duration between letters
+WORD_SPACE_MIN = SIGNAL_SPACE_MAX    # Min duration between words
 
 # Characters for dot, dash, space
 DOT = "."   
@@ -58,6 +66,7 @@ space_has_begun = False            # State when key let up
 space_start_time = running_time()  # Used to derive space
 message = list()  # List accumulates Dots, Dashes, and Spaces 
 
+# state switch, prevents keying when excel sending messages
 is_serial_receive_mode = False
 
 def not_at_max_message_length():
@@ -195,7 +204,7 @@ def process_incoming_serial_data():
         except IndexError:
             return
 
-    
+# Initialization
 uart.init(baudrate=9600) 
 uart.write(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"+EOL)
 last_message_length = 0
