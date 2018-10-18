@@ -30,27 +30,23 @@
 # ===---------------------------------------------------------------===
 
 from microbit import * 
+import radio
 import music
 
-WORD_LIMIT = 20
+radio.on()
 
-EOL = "\n"
-WORDS_PER_MINUTE = 10             # Scaler to adjust all time
-DOT_TIME = 1200/WORDS_PER_MINUTE  # Duration of ideal dot moark
-DASH_TIME = DOT_TIME * 3          # Duration of ideal dash mark
-MARK_SPACE =  DOT_TIME            # Time between marks
-SIGNAL_SPACE = DOT_TIME * 3       # Time between letters
-WORD_SPACE = DOT_TIME * 7         # Time between words
+WORD_LIMIT = 20
+EOL = '\n'
 
 """ Following thresholds are used to detect input """
-DOT_TIME_MIN =  DOT_TIME/4         # Minimum dot duration
-DOT_TIME_MAX = DASH_TIME/2         # Maximum dot duration
+DOT_TIME_MIN =   120/4         # Minimum dot duration
+DOT_TIME_MAX = 360/2         # Maximum dot duration
 
 DASH_TIME_MIN = DOT_TIME_MAX                # Min dash duration
-DASH_TIME_MAX = DASH_TIME + (DOT_TIME * 2)  # Max dash duration
+DASH_TIME_MAX = 360 + ( 120* 2)  # Max dash duration
 
-SIGNAL_SPACE_MIN = SIGNAL_SPACE * 2  # Max duration between marks
-SIGNAL_SPACE_MAX = WORD_SPACE * 2    # Max duration between letters
+SIGNAL_SPACE_MIN = 360 * 2  # Max duration between marks
+SIGNAL_SPACE_MAX = 840 * 2    # Max duration between letters
 WORD_SPACE_MIN = SIGNAL_SPACE_MAX    # Min duration between words
 
 # Characters for dot, dash, space
@@ -65,6 +61,8 @@ mark_start_time = running_time()   # Used to derive dot or dash
 space_has_begun = False            # State when key let up
 space_start_time = running_time()  # Used to derive space
 message = list()  # List accumulates Dots, Dashes, and Spaces 
+
+attached_to_computer = False
 
 # state switch, prevents keying when excel sending messages
 is_serial_receive_mode = False
@@ -138,9 +136,7 @@ def encode_keyed_morse_code():
     """ Depending on button state, encode keys to marks """
     global mark_has_begun, mark_start_time, message, space_start_time, space_has_begun
 
-    button_pressed = button_a.is_pressed()  
-
-    if button_pressed:
+    if button_a.is_pressed():
         if not mark_has_begun:
             mark_start_time = running_time() 
             mark_has_begun = True
@@ -164,19 +160,19 @@ def display_character(character):
     """ Display Dot, Dash, or Space images on LED Matrix """
     if character == DASH:
         display.show(Image.DIAMOND)        # Dot image
-        music.pitch(800,duration=int(round(DASH_TIME)),wait=True)
+        music.pitch(800,duration=int(round(360)),wait=True)
         display.clear()
-        sleep(MARK_SPACE)
+        sleep(120)
 
     if character == DOT:
         display.show(Image.DIAMOND_SMALL)  # Dash image
-        music.pitch(800,duration=int(round(DOT_TIME)),wait=True)
+        music.pitch(800,duration=int(round(120)),wait=True)
         display.clear()
-        sleep(MARK_SPACE)
+        sleep(120)
 
     if character == SPACE:
         display.clear() 
-        sleep(WORD_SPACE)
+        sleep(840)
 
 
 def process_incoming_serial_data():
@@ -209,17 +205,37 @@ uart.init(baudrate=9600)
 uart.write(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"+EOL)
 last_message_length = 0
 
+
 while True: 
+    if button_b.was_pressed():
+         attached_to_computer = not attached_to_computer
+         if attached_to_computer :
+            display.scroll("Computer Mode")
+         else:
+            display.scroll("Radio Mode")
+
     if not is_serial_receive_mode: encode_keyed_morse_code()
-    process_incoming_serial_data()
+    if attached_to_computer: process_incoming_serial_data()
+
+    receive_message = radio.receive() 
+    if receive_message:
+        for c in receive_message:
+            display_character(c)
+
     if last_message_length != len(message) and not is_serial_receive_mode:
+        
         for character in message:
             if character == SPACE:
-                uart.write(",")
+                if attached_to_computer: uart.write(",")
+                radio.send(SPACE)
             elif character == WORD:
-                uart.write(", ,")
+                if attached_to_computer: uart.write(", ,")
+                radio.send(WORD) 
             else:
-                uart.write(character)
+                if attached_to_computer: uart.write(character)
+                radio.send(character)
+                
+        if not attached_to_computer: message.clear()
 
-        uart.write(EOL)         
+        if attached_to_computer: uart.write(EOL)         
         last_message_length = len(message)
