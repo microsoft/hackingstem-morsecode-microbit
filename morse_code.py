@@ -29,7 +29,8 @@
 #  MIT License terms detailed in LICENSE.txt
 # ===---------------------------------------------------------------===
 
-from microbit import * 
+
+from microbit import *
 import radio
 import music
 
@@ -174,28 +175,35 @@ def display_character(character):
         display.clear() 
         sleep(840)
 
+process_message_list = list()
 
 def process_incoming_serial_data():
     """ gets comma delimited data from serial applies changes appropriately """
     global message, is_serial_receive_mode
     parsed_data = ""
+    
     while uart.any() is True and not parsed_data.endswith('\n'): 
         parsed_data += str(uart.read(), "utf-8", "ignore")
         sleep(10)
 
     if parsed_data:
-        uart.write("parsed {}".format(parsed_data.split(',')) + EOL)
+        process_message_list = parsed_data.split(',')
+#        uart.write("split {}".format(process_message_list) + EOL)
         try:
-            is_serial_receive_mode = ("1" == parsed_data.split(',')[0]) # TODO do we need to do anything with serial_mode??
-            serial_message_str = parsed_data.split(',')[1]
+            is_serial_receive_mode = ("1" == process_message_list[0]) # TODO do we need to do anything with serial_mode??
 
-            if parsed_data.split(',')[2]:
+            if process_message_list[2]:
                 message.clear()
 
-            if serial_message_str and len(serial_message_str) > 0 and is_serial_receive_mode:
-                for character in serial_message_str:
-                    uart.write(character+EOL)
-                    display_character(character)
+            if process_message_list[1] and len(process_message_list[1]) > 0 and is_serial_receive_mode:
+                for message_string in process_message_list[3:]:
+                    # uart.write("C,|"+message_string+"|,"+EOL)
+                    if len(message_string) == 0:
+                        display_character(WORD)
+                    else:
+                        for character in message_string:
+                            display_character(character)
+                        display_character(SPACE)
 
         except IndexError:
             return
@@ -210,15 +218,15 @@ while True:
     if button_b.was_pressed():
          attached_to_computer = not attached_to_computer
          if attached_to_computer :
-            display.scroll("Computer Mode")
+            display.scroll("Computer")
          else:
-            display.scroll("Radio Mode")
+            display.show("Radio")
 
     if not is_serial_receive_mode: encode_keyed_morse_code()
     if attached_to_computer: process_incoming_serial_data()
 
     receive_message = radio.receive() 
-    if receive_message:
+    if receive_message and not attached_to_computer:
         for c in receive_message:
             display_character(c)
 
@@ -227,13 +235,13 @@ while True:
         for character in message:
             if character == SPACE:
                 if attached_to_computer: uart.write(",")
-                radio.send(SPACE)
+                else: radio.send(SPACE)
             elif character == WORD:
                 if attached_to_computer: uart.write(", ,")
-                radio.send(WORD) 
+                else: radio.send(WORD) 
             else:
                 if attached_to_computer: uart.write(character)
-                radio.send(character)
+                else: radio.send(character)
                 
         if not attached_to_computer: message.clear()
 
