@@ -138,7 +138,8 @@ def encode_keyed_morse_code():
     """ Depending on button state, encode keys to marks """
     global mark_has_begun, mark_start_time, message, space_start_time, space_has_begun
 
-    button_pressed = button_a.is_pressed()  
+    button_pressed = button_a.is_pressed() or (pin1.read_digital() == 1)
+    if len(message) == 0: space_has_begun = False
 
     if button_pressed:
         if not mark_has_begun:
@@ -181,32 +182,47 @@ def display_character(character):
 
 def process_incoming_serial_data():
     """ gets comma delimited data from serial applies changes appropriately """
-    global message, is_serial_receive_mode
+    global message, is_serial_receive_mode, mark_has_begun
     parsed_data = ""
-    while uart.any() is True and not parsed_data.endswith('\n'): 
-        parsed_data += str(uart.read(), "utf-8", "ignore")
+    
+    while uart.any() is True and not "\n" in parsed_data: 
+        parsed_data += str(uart.readline(), "utf-8", "ignore")
         sleep(10)
 
     if parsed_data:
-        uart.write("parsed {}".format(parsed_data.split(',')) + EOL)
+        process_message_list = parsed_data.rstrip('\n').split(',')
         try:
-            is_serial_receive_mode = ("1" == parsed_data.split(',')[0]) # TODO do we need to do anything with serial_mode??
-            serial_message_str = parsed_data.split(',')[1]
+            is_serial_receive_mode = ("1" == process_message_list[0])
+            if not is_serial_receive_mode or ("1" == process_message_list[2]):
+                mark_has_begun = False
 
-            if parsed_data.split(',')[2]:
+            if process_message_list[2]:
                 message.clear()
 
-            if serial_message_str and len(serial_message_str) > 0 and is_serial_receive_mode:
-                for character in serial_message_str:
-                    uart.write(character+EOL)
-                    display_character(character)
+            if (process_message_list[1] == "1") and is_serial_receive_mode:
+                saw_word = False
+
+                for message_string in process_message_list[3:]:
+                    if "\n" in message_string:
+                        break
+
+                    if len(message_string) == 0:
+                        if not saw_word: display_character(WORD)
+                        saw_word = True
+                    else:
+                        for character in message_string:
+                            display_character(character)
+                            saw_word = False
+
+                        display_character(SPACE)
+
 
         except IndexError:
             return
 
 # Initialization
 uart.init(baudrate=9600) 
-uart.write(",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"+EOL)
+uart.write(EOL+",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"+EOL)
 last_message_length = 0
 
 while True: 
