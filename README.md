@@ -3,7 +3,7 @@ Microcontroller code for Microsoft Hacking STEM Harnessing Electricity to Commun
 
 # Getting Started
 1. Download lesson assets at http://aka.ms/hackingSTEM
-1. Attach your speaker!
+1. Build your Telegraph! and attach your Speaker!
 1. Use uflash and nudatus to flash code to [micro:bit](http://microbit.org/) microcontroller (See Flashing Controller)
 1. Verify data interactions in Excel
 1. Ready, Set, Science!
