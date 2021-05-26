@@ -1,5 +1,5 @@
-# Introduction 
-Micro:bit code for Harnessing Electricity to Communicate lesson plan
+# Introduction
+Microcontroller code for Microsoft Hacking STEM Harnessing Electricity to Communicate lesson plan adapted for micro:bit
 
 # Getting Started
 1. Download lesson assets at http://aka.ms/hackingSTEM
@@ -12,18 +12,32 @@ Micro:bit code for Harnessing Electricity to Communicate lesson plan
 Microbit has a very limited amount of space for code, to flash this program you will need to "minimize" it, which strips out extraneous stuff (like comments). We recommend using nudatus to minimize and uflash to flash.
 
 ## Get uflash
-  pip install uflash
+'''
+pip install uflash
+'''
 
 ## Get nudatus
-  pip install nudatus
+'''
+pip install nudatus
+'''
 
 ## Minimize Code
-  nudatus morse_code.py morse_code.minified.py
+'''
+nudatus morse_code.py morse_code.minified.py
+'''
 
 ## Flash Code
-  uflash morse_code.minified.py
+'''
+ uflash morse_code.minified.py
+'''
 
-# Make it your!
-This project is licensed under the MIT open source license, see License.txt. The MIT license allows you to take this project and make awesome things with it! MIT is a very permissive license, but does require you include license and copyright from License.txt in any derivative work for sake of attribution.
+# Microsoft Data Streamer Resources
+1. https://aka.ms/data-streamer-developer
+1. https://aka.ms/data-streamer
+
+# Make it your own!
+This project is licensed under the MIT open source license, see License. The MIT license allows you to take this project and make awesome things with it! MIT is a very permissive license, but does require you include license and copyright from LICENSE in any derivative work for sake of attribution.
 
 Fork away! Let us know what you build!
+
+**This is an archived repository.**
