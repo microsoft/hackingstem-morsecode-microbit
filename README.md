@@ -12,24 +12,16 @@ Microcontroller code for Microsoft Hacking STEM Harnessing Electricity to Commun
 Microbit has a very limited amount of space for code, to flash this program you will need to "minimize" it, which strips out extraneous stuff (like comments). We recommend using nudatus to minimize and uflash to flash.
 
 ## Get uflash
-'''
-pip install uflash
-'''
+  pip install uflash
 
 ## Get nudatus
-'''
-pip install nudatus
-'''
+  pip install nudatus
 
 ## Minimize Code
-'''
-nudatus morse_code.py morse_code.minified.py
-'''
+  nudatus morse_code.py morse_code.minified.py
 
 ## Flash Code
-'''
- uflash morse_code.minified.py
-'''
+  uflash morse_code.minified.py
 
 # Microsoft Data Streamer Resources
 1. https://aka.ms/data-streamer-developer
