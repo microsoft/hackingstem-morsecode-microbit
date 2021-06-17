@@ -1,6 +1,7 @@
 # ------------__ Hacking STEM – morse_code.py – micro:bit __-----------
 # For use with the Harnessing Electricity to Communicate Lesson plan
-# from Microsoft Education Workshop at http://aka.ms/hackingSTEM
+# from Microsoft Education Workshop at https://www.microsoft.com/en-us/education/education-workshop/telegraph.aspx
+# http://aka.ms/hackingSTEM
 #
 #  This project uses a speaker across Pin 0 and GND as well as the 
 #  left built in button. Using short and long button presses, up to 

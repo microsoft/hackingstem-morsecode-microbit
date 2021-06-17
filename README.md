@@ -2,7 +2,7 @@
 Microcontroller code for Microsoft Hacking STEM Harnessing Electricity to Communicate lesson plan adapted for micro:bit
 
 # Getting Started
-1. Download lesson assets at http://aka.ms/hackingSTEM
+1. Download lesson assets at https://www.microsoft.com/en-us/education/education-workshop/telegraph.aspx
 1. Build your Telegraph! and attach your Speaker!
 1. Use uflash and nudatus to flash code to [micro:bit](http://microbit.org/) microcontroller (See Flashing Controller)
 1. Verify data interactions in Excel
@@ -32,4 +32,4 @@ This project is licensed under the MIT open source license, see License. The MIT
 
 Fork away! Let us know what you build!
 
-**This is an archived repository.**
+http://aka.ms/hackingSTEM
